@@ -1,16 +1,14 @@
 name: release
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    tags: [ 'v*.*.*' ]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  linux:
-    name: release (linux)
+  linux_amd64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +16,6 @@ jobs:
       - uses: actions/setup-go@v5
         with: { go-version: '1.22' }
 
-      # Install H3 C library natively (CGO)
       - name: Install libh3
         run: |
           sudo apt-get update
@@ -30,56 +27,47 @@ jobs:
           sudo make install
           sudo ldconfig
 
-      - name: GoReleaser (linux only)
+      - name: GoReleaser (linux/amd64)
         uses: goreleaser/goreleaser-action@v6
+        with:
+          version: v2
+          args: release --clean --config .goreleaser.linux-amd64.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
-        with:
-          version: v2
-          # Limit to linux/amd64 so we don't cross-compile CGO.
-          args: release --clean --skip=publish --config .goreleaser.yaml --id hexatiles \
-                --single-target --goos linux --goarch amd64
 
-      # Publish artifacts produced in previous step
-      - name: GoReleaser publish (attach linux artifacts)
-        uses: goreleaser/goreleaser-action@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
-        with:
-          version: v2
-          args: release --clean --skip=build --config .goreleaser.yaml
-
-  macos:
-    name: release (macOS)
+  darwin_arm64:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: actions/setup-go@v5
         with: { go-version: '1.22' }
-
-      # Install H3 C lib for CGO
       - name: Install libh3
         run: brew install h3
-
-      - name: GoReleaser (darwin only)
+      - name: GoReleaser (darwin/arm64)
         uses: goreleaser/goreleaser-action@v6
+        with:
+          version: v2
+          args: release --clean --config .goreleaser.darwin-arm64.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+
+  darwin_amd64:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - name: Install libh3
+        run: brew install h3
+      - name: GoReleaser (darwin/amd64)
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: v2
-          # Build darwin/amd64 and darwin/arm64 natively
-          args: release --clean --skip=publish --config .goreleaser.yaml --id hexatiles \
-                --single-target --goos darwin --goarch amd64,arm64
-
-      - name: GoReleaser publish (attach darwin artifacts + brew)
-        uses: goreleaser/goreleaser-action@v6
+          args: release --clean --config .goreleaser.darwin-amd64.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
-        with:
-          version: v2
-          args: release --clean --skip=build --config .goreleaser.yaml
