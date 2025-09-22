@@ -1,0 +1,10 @@
+# Build artifacts
+/dist/
+*.pmtiles
+*.mbtiles
+
+# Go build cache
+.gocache/
+
+# Editor files
+.DS_Store
