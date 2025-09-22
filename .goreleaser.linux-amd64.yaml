@@ -1,30 +1,28 @@
 version: 2
 project_name: hexatiles
 
+release:
+  mode: append
+
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: hexatiles
+  - id: hexatiles-linux-amd64
     main: ./cmd/hexatiles
-    env: [CGO_ENABLED=1]     # CGO ON
+    env: [CGO_ENABLED=1]
     flags: [ -trimpath ]
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
-    goos: [darwin, linux]    # no windows yet
-    goarch: [amd64, arm64]   # darwin/arm64 works; linux/arm64 is ignored by the linux job below
-    # NOTE: we'll filter OS per job in the workflow
+    goos: [linux]
+    goarch: [amd64]
+    binary: hexatiles
 
 archives:
-  - id: default
-    formats: [tar.gz, zip]
-    # zip will be used only if goos == windows (not in v0.1)
-    format_overrides:
-      - goos: darwin
-        format: tar.gz
-      - goos: linux
-        format: tar.gz
+  - id: linux
+    builds: [hexatiles-linux-amd64]
+    formats: [tar.gz]
     files:
       - LICENSE
       - README.md
@@ -36,8 +34,6 @@ checksum:
 changelog:
   use: git
   sort: asc
-  filters:
-    exclude: ["^docs:", "^test:", "^chore:"]
 
 brews:
   - name: hexatiles
@@ -51,5 +47,3 @@ brews:
     license: Apache-2.0
     test: |
       system "#{bin}/hexatiles", "--help"
-
-# remove scoops for now: no Windows binary yet
