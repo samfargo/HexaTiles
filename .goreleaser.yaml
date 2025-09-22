@@ -1,3 +1,4 @@
+version: 2
 project_name: hexatiles
 
 before:
@@ -7,20 +8,18 @@ before:
 builds:
   - id: hexatiles
     main: ./cmd/hexatiles
-    binary: hexatiles
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
+    env: [CGO_ENABLED=0]
+    flags: [ -trimpath ]
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
+    binary: hexatiles
 
 archives:
   - id: archive
     builds: [hexatiles]
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    # tar.gz for unix, zip for windows
     format_overrides:
       - goos: windows
         format: zip
@@ -33,36 +32,36 @@ checksum:
   name_template: "checksums.txt"
 
 changelog:
-  use: github
   sort: asc
+  use: git
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
 
 brews:
   - name: hexatiles
-    homepage: https://github.com/hexatiles/hexatiles
-    description: "Parquet → H3 polygons → PMTiles in one command."
-    license: Apache-2.0
-    tap:
-      owner: hexatiles
+    repository:                
+      owner: samfargo   
       name: homebrew-tap
-    directory: Formula
+      branch: main
+    directory: Formula        
     commit_author:
-      name: HexaTiles CI
-      email: ci@hexatiles.dev
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    homepage: https://github.com/samfargo/HexaTiles
+    description: Parquet → H3 polygons → PMTiles in one command
+    license: Apache-2.0
     test: |
       system "#{bin}/hexatiles", "--help"
 
 scoops:
   - name: hexatiles
-    homepage: https://github.com/hexatiles/hexatiles
-    description: "Parquet → H3 polygons → PMTiles in one command."
-    license: Apache-2.0
-    bucket:
-      owner: hexatiles
+    repository:               
+      owner: samfargo
       name: scoop-bucket
-
-release:
-  draft: false
-  prerelease: auto
-  mode: replace
-
-report_sizes: true
+      branch: main
+    homepage: https://github.com/samfargo/HexaTiles
+    description: Parquet → H3 polygons → PMTiles in one command
+    license: Apache-2.0
