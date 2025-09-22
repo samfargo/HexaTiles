@@ -44,6 +44,7 @@ brews:
       owner: samfargo
       name: homebrew-tap
       branch: main
+      token: "{{ .Env.GORELEASER_GITHUB_TOKEN }}"
     directory: Formula
     commit_author:
       name: goreleaserbot
