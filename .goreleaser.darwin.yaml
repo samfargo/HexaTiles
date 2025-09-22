@@ -1,0 +1,65 @@
+version: 2
+project_name: hexatiles
+
+release:
+  mode: append   # append darwin assets to the same tag
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: hexatiles-darwin
+    main: ./cmd/hexatiles
+    env: [CGO_ENABLED=1]
+    flags: [ -trimpath ]
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    binary: hexatiles
+
+archives:
+  - id: archive
+    format_overrides:
+      - goos: darwin
+        format: tar.gz
+    files:
+      - LICENSE
+      - README.md
+      - examples/demo/index.html
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: git
+  filters:
+    exclude: ["^docs:", "^test:", "^chore:"]
+
+brews:
+  - name: hexatiles
+    repository:
+      owner: samfargo
+      name: homebrew-tap
+      branch: main
+    directory: Formula
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    homepage: https://github.com/samfargo/HexaTiles
+    description: Parquet → H3 polygons → PMTiles in one command
+    license: Apache-2.0
+    test: |
+      system "#{bin}/hexatiles", "--help"
+
+scoops:
+  - name: hexatiles
+    repository:
+      owner: samfargo
+      name: scoop-bucket
+      branch: main
+    homepage: https://github.com/samfargo/HexaTiles
+    description: Parquet → H3 polygons → PMTiles in one command
+    license: Apache-2.0

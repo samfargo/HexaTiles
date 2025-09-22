@@ -1,0 +1,39 @@
+version: 2
+project_name: hexatiles
+
+release:
+  mode: append   # allow multiple jobs to append assets to the same tag
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: hexatiles-linux
+    main: ./cmd/hexatiles
+    env: [CGO_ENABLED=1]
+    flags: [ -trimpath ]
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [linux]
+    goarch: [amd64, arm64]
+    binary: hexatiles
+
+archives:
+  - id: archive
+    format_overrides:
+      - goos: linux
+        format: tar.gz
+    files:
+      - LICENSE
+      - README.md
+      - examples/demo/index.html
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: git
+  filters:
+    exclude: ["^docs:", "^test:", "^chore:"]
