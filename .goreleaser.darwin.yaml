@@ -53,13 +53,3 @@ brews:
     license: Apache-2.0
     test: |
       system "#{bin}/hexatiles", "--help"
-
-scoops:
-  - name: hexatiles
-    repository:
-      owner: samfargo
-      name: scoop-bucket
-      branch: main
-    homepage: https://github.com/samfargo/HexaTiles
-    description: Parquet → H3 polygons → PMTiles in one command
-    license: Apache-2.0

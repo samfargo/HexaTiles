@@ -6,5 +6,8 @@
 # Go build cache
 .gocache/
 
+# Build dependencies
+h3/
+
 # Editor files
 .DS_Store
