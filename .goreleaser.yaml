@@ -1,31 +1,30 @@
 version: 2
 project_name: hexatiles
 
-release:
-  mode: append   # append windows assets to the same tag
-
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - id: hexatiles-windows
+  - id: hexatiles
     main: ./cmd/hexatiles
-    env: 
-      - CGO_ENABLED=1
-      - CC=gcc
+    env: [CGO_ENABLED=1]     # CGO ON
     flags: [ -trimpath ]
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
-    goos: [windows]
-    goarch: [amd64]  # Only build amd64 for Windows due to H3 library complexity
-    binary: hexatiles
+    goos: [darwin, linux]    # no windows yet
+    goarch: [amd64, arm64]   # darwin/arm64 works; linux/arm64 is ignored by the linux job below
+    # NOTE: we'll filter OS per job in the workflow
 
 archives:
-  - id: archive
+  - id: default
+    formats: [tar.gz, zip]
+    # zip will be used only if goos == windows (not in v0.1)
     format_overrides:
-      - goos: windows
-        format: zip
+      - goos: darwin
+        format: tar.gz
+      - goos: linux
+        format: tar.gz
     files:
       - LICENSE
       - README.md
@@ -35,18 +34,22 @@ checksum:
   name_template: "checksums.txt"
 
 changelog:
-  sort: asc
   use: git
+  sort: asc
   filters:
     exclude: ["^docs:", "^test:", "^chore:"]
 
-scoops:
+brews:
   - name: hexatiles
     repository:
       owner: samfargo
-      name: scoop-bucket
+      name: homebrew-tap
       branch: main
-      token: "{{ .Env.GORELEASER_GITHUB_TOKEN }}"
+    directory: Formula
     homepage: https://github.com/samfargo/HexaTiles
     description: Parquet → H3 polygons → PMTiles in one command
     license: Apache-2.0
+    test: |
+      system "#{bin}/hexatiles", "--help"
+
+# remove scoops for now: no Windows binary yet
