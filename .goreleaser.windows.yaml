@@ -11,12 +11,14 @@ before:
 builds:
   - id: hexatiles-windows
     main: ./cmd/hexatiles
-    env: [CGO_ENABLED=0]  # Disable CGO for Windows to avoid C dependencies
-    flags: [ -trimpath, -tags=nolibh3 ]  # Use pure Go H3 implementation
+    env: 
+      - CGO_ENABLED=1
+      - CC=gcc
+    flags: [ -trimpath ]
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     goos: [windows]
-    goarch: [amd64, arm64]
+    goarch: [amd64]  # Only build amd64 for Windows due to H3 library complexity
     binary: hexatiles
 
 archives:

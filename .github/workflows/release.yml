@@ -17,16 +17,26 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/setup-go@v5
         with: { go-version: '1.22' }
-      - name: Install libh3 (C library)
+      - name: Install libh3 (C library) and cross-compilation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake make gcc g++ git
+          sudo apt-get install -y cmake make gcc g++ git gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+          
+          # Build H3 for amd64
           git clone --depth 1 https://github.com/uber/h3.git
           cd h3
           cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release .
           make -j"$(nproc)"
           sudo make install
           sudo ldconfig
+          cd ..
+          
+          # Build H3 for arm64
+          git clone --depth 1 https://github.com/uber/h3.git h3-arm64
+          cd h3-arm64
+          cmake -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/aarch64-linux-gnu .
+          make -j"$(nproc)"
+          sudo make install
       - name: GoReleaser (linux)
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -63,11 +73,31 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/setup-go@v5
         with: { go-version: '1.22' }
-      - name: GoReleaser (windows + scoop)
-        uses: goreleaser/goreleaser-action@v6
+      - name: Install MSYS2 and build H3
+        uses: msys2/setup-msys2@v2
         with:
-          version: v2
-          args: release --clean --config .goreleaser.windows.yaml
+          msystem: MINGW64
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-make
+            git
+      - name: Build H3 library
+        shell: msys2 {0}
+        run: |
+          git clone --depth 1 https://github.com/uber/h3.git
+          cd h3
+          cmake -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release .
+          make -j$(nproc)
+          make install
+      - name: Install GoReleaser and Build
+        shell: msys2 {0}
+        run: |
+          export PATH="/mingw64/bin:$PATH"
+          export CGO_CFLAGS="-I/mingw64/include"
+          export CGO_LDFLAGS="-L/mingw64/lib"
+          curl -sfL https://goreleaser.com/static/run | sh -s -- --version
+          curl -sfL https://goreleaser.com/static/run | sh -s -- release --clean --config .goreleaser.windows.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
