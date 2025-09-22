@@ -29,21 +29,8 @@ archives:
       - examples/demo/index.html
 
 checksum:
-  name_template: "checksums.txt"
+  disable: true
 
 changelog:
   use: git
   sort: asc
-
-brews:
-  - name: hexatiles
-    repository:
-      owner: samfargo
-      name: homebrew-tap
-      branch: main
-    directory: Formula
-    homepage: https://github.com/samfargo/HexaTiles
-    description: Parquet → H3 polygons → PMTiles in one command
-    license: Apache-2.0
-    test: |
-      system "#{bin}/hexatiles", "--help"
