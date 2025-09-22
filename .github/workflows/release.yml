@@ -6,98 +6,80 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # create/update the GitHub Release in this repo
+  contents: write
 
 jobs:
-  release-linux:
-    name: GoReleaser (Linux)
+  linux:
+    name: release (linux)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: actions/setup-go@v5
         with: { go-version: '1.22' }
-      - name: Install libh3 (C library) and cross-compilation tools
+
+      # Install H3 C library natively (CGO)
+      - name: Install libh3
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake make gcc g++ git gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-          
-          # Build H3 for amd64
+          sudo apt-get install -y cmake make gcc g++ git
           git clone --depth 1 https://github.com/uber/h3.git
           cd h3
           cmake -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release .
           make -j"$(nproc)"
           sudo make install
           sudo ldconfig
-          cd ..
-          
-          # Build H3 for arm64
-          git clone --depth 1 https://github.com/uber/h3.git h3-arm64
-          cd h3-arm64
-          cmake -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/aarch64-linux-gnu .
-          make -j"$(nproc)"
-          sudo make install
-      - name: GoReleaser (linux)
+
+      - name: GoReleaser (linux only)
         uses: goreleaser/goreleaser-action@v6
-        with:
-          version: v2
-          args: release --clean --config .goreleaser.linux.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+        with:
+          version: v2
+          # Limit to linux/amd64 so we don't cross-compile CGO.
+          args: release --clean --skip=publish --config .goreleaser.yaml --id hexatiles \
+                --single-target --goos linux --goarch amd64
 
-  release-macos:
-    name: GoReleaser (macOS)
+      # Publish artifacts produced in previous step
+      - name: GoReleaser publish (attach linux artifacts)
+        uses: goreleaser/goreleaser-action@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+        with:
+          version: v2
+          args: release --clean --skip=build --config .goreleaser.yaml
+
+  macos:
+    name: release (macOS)
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: actions/setup-go@v5
         with: { go-version: '1.22' }
+
+      # Install H3 C lib for CGO
       - name: Install libh3
         run: brew install h3
-      - name: GoReleaser (darwin + brew)
+
+      - name: GoReleaser (darwin only)
         uses: goreleaser/goreleaser-action@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
         with:
           version: v2
-          args: release --clean --config .goreleaser.darwin.yaml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+          # Build darwin/amd64 and darwin/arm64 natively
+          args: release --clean --skip=publish --config .goreleaser.yaml --id hexatiles \
+                --single-target --goos darwin --goarch amd64,arm64
 
-  release-windows:
-    name: GoReleaser (Windows)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-go@v5
-        with: { go-version: '1.22' }
-      - name: Install MSYS2 and build H3
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-make
-            git
-      - name: Build H3 library
-        shell: msys2 {0}
-        run: |
-          git clone --depth 1 https://github.com/uber/h3.git
-          cd h3
-          cmake -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release .
-          make -j$(nproc)
-          make install
-      - name: Install GoReleaser and Build
-        shell: msys2 {0}
-        run: |
-          export PATH="/mingw64/bin:$PATH"
-          export CGO_CFLAGS="-I/mingw64/include"
-          export CGO_LDFLAGS="-L/mingw64/lib"
-          curl -sfL https://goreleaser.com/static/run | sh -s -- --version
-          curl -sfL https://goreleaser.com/static/run | sh -s -- release --clean --config .goreleaser.windows.yaml
+      - name: GoReleaser publish (attach darwin artifacts + brew)
+        uses: goreleaser/goreleaser-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
+        with:
+          version: v2
+          args: release --clean --skip=build --config .goreleaser.yaml
