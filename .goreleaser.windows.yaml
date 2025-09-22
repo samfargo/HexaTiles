@@ -1,0 +1,49 @@
+version: 2
+project_name: hexatiles
+
+release:
+  mode: append   # append windows assets to the same tag
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: hexatiles-windows
+    main: ./cmd/hexatiles
+    env: [CGO_ENABLED=0]  # Disable CGO for Windows to avoid C dependencies
+    flags: [ -trimpath ]
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [windows]
+    goarch: [amd64, arm64]
+    binary: hexatiles
+
+archives:
+  - id: archive
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - examples/demo/index.html
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  use: git
+  filters:
+    exclude: ["^docs:", "^test:", "^chore:"]
+
+scoops:
+  - name: hexatiles
+    repository:
+      owner: samfargo
+      name: scoop-bucket
+      branch: main
+    homepage: https://github.com/samfargo/HexaTiles
+    description: Parquet → H3 polygons → PMTiles in one command
+    license: Apache-2.0
