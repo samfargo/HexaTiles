@@ -9,14 +9,23 @@ before:
     - go mod tidy
 
 builds:
-  - id: hexatiles-linux
+  - id: hexatiles-linux-amd64
     main: ./cmd/hexatiles
     env: [CGO_ENABLED=1]
     flags: [ -trimpath ]
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     goos: [linux]
-    goarch: [amd64, arm64]
+    goarch: [amd64]
+    binary: hexatiles
+  - id: hexatiles-linux-arm64
+    main: ./cmd/hexatiles
+    env: [CGO_ENABLED=0]  # Use pure Go for ARM64 to avoid cross-compilation issues
+    flags: [ -trimpath, -tags=nolibh3 ]
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [linux]
+    goarch: [arm64]
     binary: hexatiles
 
 archives:

@@ -12,7 +12,7 @@ builds:
   - id: hexatiles-windows
     main: ./cmd/hexatiles
     env: [CGO_ENABLED=0]  # Disable CGO for Windows to avoid C dependencies
-    flags: [ -trimpath ]
+    flags: [ -trimpath, -tags=nolibh3 ]  # Use pure Go H3 implementation
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     goos: [windows]
@@ -44,6 +44,7 @@ scoops:
       owner: samfargo
       name: scoop-bucket
       branch: main
+      token: "{{ .Env.GORELEASER_GITHUB_TOKEN }}"
     homepage: https://github.com/samfargo/HexaTiles
     description: Parquet → H3 polygons → PMTiles in one command
     license: Apache-2.0
