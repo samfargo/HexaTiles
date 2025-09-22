@@ -1,0 +1,68 @@
+project_name: hexatiles
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: hexatiles
+    main: ./cmd/hexatiles
+    binary: hexatiles
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+archives:
+  - id: archive
+    builds: [hexatiles]
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - examples/demo/index.html
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: github
+  sort: asc
+
+brews:
+  - name: hexatiles
+    homepage: https://github.com/hexatiles/hexatiles
+    description: "Parquet → H3 polygons → PMTiles in one command."
+    license: Apache-2.0
+    tap:
+      owner: hexatiles
+      name: homebrew-tap
+    directory: Formula
+    commit_author:
+      name: HexaTiles CI
+      email: ci@hexatiles.dev
+    test: |
+      system "#{bin}/hexatiles", "--help"
+
+scoops:
+  - name: hexatiles
+    homepage: https://github.com/hexatiles/hexatiles
+    description: "Parquet → H3 polygons → PMTiles in one command."
+    license: Apache-2.0
+    bucket:
+      owner: hexatiles
+      name: scoop-bucket
+
+release:
+  draft: false
+  prerelease: auto
+  mode: replace
+
+report_sizes: true

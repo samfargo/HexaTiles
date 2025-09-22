@@ -1,0 +1,46 @@
+name: release
+
+on:
+  push:
+    # tag with full semver like v0.1.0 (pre-releases like v0.1.0-rc1 also match)
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write  # allow creating releases in this repo
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # required by GoReleaser for changelog & tagging
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # Optional: speed up builds by caching modules
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          # Default token for creating the release & uploading assets to THIS repo
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Fine-grained PAT with write access to hexatiles/homebrew-tap and hexatiles/scoop-bucket
+          GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}

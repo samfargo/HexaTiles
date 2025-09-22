@@ -2,11 +2,32 @@
 
 HexaTiles converts Parquet files with H3 cells into ready-to-serve PMTiles vector tiles. One command, one artifact, no servers.
 
+## Install
+
+macOS (Homebrew):
+
+```bash
+brew tap hexatiles/tap
+brew install hexatiles
+```
+
+Linux/macOS (curl | bash):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hexatiles/hexatiles/refs/heads/main/scripts/install.sh | bash
+```
+
+Windows (Scoop):
+
+```powershell
+scoop bucket add hexatiles https://github.com/hexatiles/scoop-bucket
+scoop install hexatiles
+```
+
 ## Quickstart (60 seconds)
 
 ```bash
-# 1. Download or build the binary
-make build
+# 1. Install the CLI (see Install above)
 
 # 2. Generate the sample tileset
 make sample
@@ -58,7 +79,10 @@ hexatiles validate --in data/metrics.parquet --sample 10000
 ## Limitations
 
 - Only H3 hexagon cells are supported (no arbitrary geometry inputs).
-- Tippecanoe and the pmtiles CLI must be installed and reachable on `PATH`.
+- External tools required at build-time:
+  - tippecanoe (brew install tippecanoe | apt install tippecanoe)
+  - pmtiles (brew install pmtiles | npm i -g @protomaps/pmtiles | download binary)
+  The CLI will detect and print install hints if missing.
 - PMTiles metadata is derived from the dataset; customise styling in your MapLibre client.
 
 ## Contributing
