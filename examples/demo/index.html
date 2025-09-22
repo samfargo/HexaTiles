@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HexaTiles Demo</title>
+<link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@2.10.0/dist/pmtiles.js"></script>
+<style>
+  html, body { height: 100%; margin: 0; }
+  #header { position: absolute; z-index: 10; top: 12px; left: 12px; right: 12px; background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; }
+  #map { height: 100%; width: 100%; }
+  code { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; }
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hint { color: #475569; }
+  .warning { color: #b43403; }
+  #status { margin-left: 8px; }
+</style>
+</head>
+<body>
+<div id="header">
+  <strong>HexaTiles Demo</strong> &middot; Drop a <code>.pmtiles</code> next to this file, named <code>sample.pmtiles</code>, or pass a custom path via <code>?file=your.pmtiles</code>.
+  <span id="status" class="hint"></span>
+</div>
+<div id="map"></div>
+<script>
+(async function() {
+  const urlParam = new URLSearchParams(window.location.search).get('file');
+  const relPath = urlParam || 'sample.pmtiles';
+  const tilesUrl = new URL(relPath, window.location.href).toString();
+
+  const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol('pmtiles', protocol.tile);
+  const pm = new pmtiles.PMTiles(tilesUrl);
+  protocol.add(pm);
+
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: {
+      version: 8,
+      sources: {
+        h3: { type: 'vector', url: 'pmtiles://' + tilesUrl }
+      },
+      layers: [
+        { id: 'h3-fill', type: 'fill', source: 'h3', 'source-layer': 'h3', paint: { 'fill-color': '#277da1', 'fill-opacity': 0.65, 'fill-outline-color': '#1d3557' } }
+      ]
+    },
+    center: [0, 0],
+    zoom: 2
+  });
+  map.addControl(new maplibregl.NavigationControl());
+
+  const status = document.getElementById('status');
+  status.textContent = 'Loading metadata…';
+  try {
+    const md = await pm.getMetadata();
+    status.textContent = '';
+    if (md && md.center && md.center.length >= 3) {
+      map.jumpTo({ center: [md.center[0], md.center[1]], zoom: md.center[2] });
+    } else if (md && md.bounds && md.bounds.length >= 4) {
+      map.fitBounds([[md.bounds[0], md.bounds[1]], [md.bounds[2], md.bounds[3]]], { padding: 20 });
+    } else {
+      status.textContent = 'No center/bounds in metadata';
+      status.className = 'hint';
+    }
+  } catch (e) {
+    status.textContent = 'Could not load PMTiles metadata';
+    status.className = 'warning';
+    console.warn(e);
+  }
+})();
+</script>
+</body>
+</html>
+
+
