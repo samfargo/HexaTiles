@@ -15,6 +15,13 @@ import (
 	"github.com/hexatiles/hexatiles/internal/validate"
 )
 
+// These variables are set via ldflags during build
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
+)
+
 func main() {
 	if err := newRootCommand().Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -27,8 +34,17 @@ func newRootCommand() *cobra.Command {
 		Use:   "hexatiles",
 		Short: "HexaTiles: Parquet → H3 polygons → PMTiles in one command",
 		Long:  "HexaTiles converts H3-indexed Parquet datasets into PMTiles vector tilesets with deterministic defaults.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			showVersion, _ := cmd.Flags().GetBool("version")
+			if showVersion {
+				fmt.Printf("hexatiles version %s (commit: %s, built: %s)\n", version, commit, date)
+				return nil
+			}
+			return cmd.Help()
+		},
 	}
 
+	cmd.Flags().BoolP("version", "v", false, "Show version information")
 	cmd.AddCommand(newBuildCommand())
 	cmd.AddCommand(newValidateCommand())
 	cmd.AddCommand(newInspectCommand())
