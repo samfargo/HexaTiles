@@ -41,10 +41,10 @@ brews:
       owner: samfargo
       name: homebrew-tap
       branch: main
+      token: "{{ .Env.GORELEASER_GITHUB_TOKEN }}"
     directory: Formula
     homepage: https://github.com/samfargo/HexaTiles
     description: Parquet → H3 polygons → PMTiles in one command
     license: Apache-2.0
-    token: "{{ .Env.GORELEASER_GITHUB_TOKEN }}"
     test: |
       system "#{bin}/hexatiles", "--help"
