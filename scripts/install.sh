@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OWNER="hexatiles"
-REPO="hexatiles"
+OWNER="samfargo"
+REPO="HexaTiles"
 
 die() { echo "install: $*" >&2; exit 1; }
 

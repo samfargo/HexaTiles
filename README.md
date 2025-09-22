@@ -4,25 +4,22 @@ HexaTiles converts Parquet files with H3 cells into ready-to-serve PMTiles vecto
 
 ## Install
 
-macOS (Homebrew):
-
+**macOS (Homebrew)**
 ```bash
-brew tap hexatiles/tap
+brew tap samfargo/tap
 brew install hexatiles
+hexatiles --version
 ```
 
-Linux/macOS (curl | bash):
-
+**Linux/macOS (curl | bash)**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hexatiles/hexatiles/refs/heads/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/samfargo/HexaTiles/refs/heads/main/scripts/install.sh | bash
 ```
 
-Windows (Scoop):
+**Dependencies for build**: `tippecanoe` and `pmtiles` CLI must be on your PATH.
 
-```powershell
-scoop bucket add hexatiles https://github.com/hexatiles/scoop-bucket
-scoop install hexatiles
-```
+- **macOS**: `brew install tippecanoe protomaps/protomaps/pmtiles`
+- **Ubuntu**: `sudo apt-get install tippecanoe` (or build from source) + download `pmtiles` CLI from [releases](https://github.com/protomaps/go-pmtiles/releases)
 
 ## Quickstart (60 seconds)
 
@@ -80,8 +77,8 @@ hexatiles validate --in data/metrics.parquet --sample 10000
 
 - Only H3 hexagon cells are supported (no arbitrary geometry inputs).
 - External tools required at build-time:
-  - tippecanoe (brew install tippecanoe | apt install tippecanoe)
-  - pmtiles (brew install pmtiles | npm i -g @protomaps/pmtiles | download binary)
+  - tippecanoe (see dependencies above)
+  - pmtiles (see dependencies above)
   The CLI will detect and print install hints if missing.
 - PMTiles metadata is derived from the dataset; customise styling in your MapLibre client.
 
