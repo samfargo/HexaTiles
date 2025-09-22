@@ -24,10 +24,10 @@ func NewPMTilesConverter(pathOverride string) (*PMTilesConverter, error) {
 		candidate = "pmtiles"
 	}
 
-	resolved, err := exec.LookPath(candidate)
-	if err != nil {
-		return nil, fmt.Errorf("pmtiles CLI not found (%s): %w", candidate, err)
-	}
+    resolved, err := exec.LookPath(candidate)
+    if err != nil {
+        return nil, fmt.Errorf("pmtiles CLI not found. Install via: macOS 'brew install pmtiles', Windows 'scoop install pmtiles', or 'npm i -g @protomaps/pmtiles'. See https://github.com/protomaps/PMTiles")
+    }
 
 	return &PMTilesConverter{Binary: resolved}, nil
 }

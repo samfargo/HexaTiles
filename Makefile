@@ -20,6 +20,10 @@ sample: build
 	@echo "(Skipping Parquet generator; please place a sample Parquet at $(DIST)/sample.parquet)"
 	./$(BINARY) build --in $(DIST)/sample.parquet --out $(DIST)/sample.pmtiles --keep-ndjson
 
+.PHONY: release
+release:
+	goreleaser release --clean
+
 clean:
 	rm -rf $(DIST)
 	rm -f $(BINARY)

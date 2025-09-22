@@ -37,10 +37,10 @@ func NewTippecanoeRunner(pathOverride string) (*TippecanoeRunner, error) {
 		candidate = "tippecanoe"
 	}
 
-	resolved, err := exec.LookPath(candidate)
-	if err != nil {
-		return nil, fmt.Errorf("tippecanoe not found (%s): %w", candidate, err)
-	}
+    resolved, err := exec.LookPath(candidate)
+    if err != nil {
+        return nil, fmt.Errorf("tippecanoe CLI not found. Install via: macOS 'brew install tippecanoe', Ubuntu 'sudo apt install tippecanoe', or see https://github.com/felt/tippecanoe")
+    }
 
 	return &TippecanoeRunner{Binary: resolved}, nil
 }
