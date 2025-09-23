@@ -66,10 +66,23 @@ hexatiles build \
   --out dist/metrics.pmtiles \
   --props score,category \
   --quantize float=0.01 \
-  --min-res 5 --max-res 10
+  --min-res 5 --max-res 10 \
+  --name "My H3 Dataset" \
+  --description "H3 hexagons with metrics data"
+
+# Drop debug properties and add metadata
+hexatiles build \
+  --in data/metrics.parquet \
+  --out dist/metrics.pmtiles \
+  --props-drop "debug_*,temp_*" \
+  --attribution "© My Organization" \
+  --tileset-version "1.0.0"
 
 # Inspect a PMTiles archive
 hexatiles inspect --in dist/metrics.pmtiles
+
+# Inspect Parquet file schema and properties
+hexatiles schema --in data/metrics.parquet
 
 # Validate a folder of Parquet files without building tiles
 hexatiles validate --in data/metrics.parquet --sample 10000
