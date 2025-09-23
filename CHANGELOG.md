@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/samfargo/HexaTiles/compare/hexatiles-v0.1.9...hexatiles-v0.1.10) (2025-09-23)
+
+
+### Bug Fixes
+
+* correct argument syntax in release workflow for GoReleaser ([f66eac5](https://github.com/samfargo/HexaTiles/commit/f66eac5a39711afe874686de70c239d70488b36d))
+
 ## [0.1.9](https://github.com/samfargo/HexaTiles/compare/hexatiles-v0.1.8...hexatiles-v0.1.9) (2025-09-23)
 
 
