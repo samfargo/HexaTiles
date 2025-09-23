@@ -87,5 +87,5 @@ hexatiles validate --in data/metrics.parquet --sample 10000
 Issues and pull requests are welcome! Please:
 
 1. Run `make test` before submitting.
-2. Keep changes focused—HexaTiles is intentionally scoped to H3 polygon tiling.
+2. Keep changes focused. HexaTiles is intentionally scoped to H3 polygon tiling.
 3. Add tests for new quantization or validation behaviours.
