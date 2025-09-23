@@ -21,7 +21,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: v2
-          args: release --clean --config .goreleaser.darwin-arm64.yaml --skip-validate
+          args: release --clean --config .goreleaser.darwin-arm64.yaml --skip validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
@@ -51,7 +51,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: v2
-          args: release --clean --config .goreleaser.linux-amd64.yaml --skip-validate
+          args: release --clean --config .goreleaser.linux-amd64.yaml --skip validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: v2
-          args: release --clean --config .goreleaser.darwin-amd64.yaml --skip-validate
+          args: release --clean --config .goreleaser.darwin-amd64.yaml --skip validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
