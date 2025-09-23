@@ -141,6 +141,9 @@ func (r *Report) WriteHTML(path string) error {
 			return string(buf)
 		},
 		"Join": strings.Join,
+		"int64": func(i int) int64 {
+			return int64(i)
+		},
 	}
 
 	tpl, err := template.New("report").Funcs(funcMap).Parse(htmlTemplate)

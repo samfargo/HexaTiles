@@ -1,5 +1,7 @@
 # HexaTiles
 
+Turn H3 data into map tiles.
+
 HexaTiles converts Parquet files with H3 cells into ready-to-serve PMTiles vector tiles. One command, one artifact, no servers.
 
 ## Install
@@ -30,6 +32,13 @@ curl -fsSL https://raw.githubusercontent.com/samfargo/HexaTiles/refs/heads/main/
 make sample
 
 # 3. Preview locally
+./hexatiles preview --pmtiles dist/sample.pmtiles --open
+```
+
+**Alternative**: Generate sample data directly with the CLI:
+```bash
+./hexatiles sample --out dist/sample.parquet
+./hexatiles build --in dist/sample.parquet --out dist/sample.pmtiles
 ./hexatiles preview --pmtiles dist/sample.pmtiles --open
 ```
 

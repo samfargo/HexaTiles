@@ -6,7 +6,7 @@
 <title>HexaTiles Demo</title>
 <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/pmtiles@2.10.0/dist/pmtiles.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
 <style>
   html, body { height: 100%; margin: 0; }
   #header { position: absolute; z-index: 10; top: 12px; left: 12px; right: 12px; background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; }
@@ -33,8 +33,8 @@
 
   const protocol = new pmtiles.Protocol();
   maplibregl.addProtocol('pmtiles', protocol.tile);
-  const pm = new pmtiles.PMTiles(tilesUrl);
-  protocol.add(pm);
+  const pmtilesInstance = new pmtiles.PMTiles(tilesUrl);
+  protocol.add(pmtilesInstance);
 
   const map = new maplibregl.Map({
     container: 'map',
@@ -55,7 +55,7 @@
   const status = document.getElementById('status');
   status.textContent = 'Loading metadata…';
   try {
-    const md = await pm.getMetadata();
+    const md = await pmtilesInstance.getMetadata();
     status.textContent = '';
     if (md && md.center && md.center.length >= 3) {
       map.jumpTo({ center: [md.center[0], md.center[1]], zoom: md.center[2] });
