@@ -119,7 +119,7 @@ var previewTemplate = template.Must(template.New("preview").Parse(`<!DOCTYPE htm
 <title>HexaTiles Preview</title>
 <link href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/pmtiles@2.10.0/dist/pmtiles.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
 <style>
   html, body { height: 100%; margin: 0; }
   #map { height: 100%; width: 100%; }
@@ -133,20 +133,33 @@ var previewTemplate = template.Must(template.New("preview").Parse(`<!DOCTYPE htm
   maplibregl.addProtocol("pmtiles", protocol.tile);
 
   const tilesUrl = window.location.origin + "{{.TilesPath}}";
-  const pmtiles = new pmtiles.PMTiles(tilesUrl);
-  protocol.add(pmtiles);
+  const pmtilesInstance = new pmtiles.PMTiles(tilesUrl);
+  protocol.add(pmtilesInstance);
 
   const map = new maplibregl.Map({
     container: "map",
     style: {
       version: 8,
       sources: {
+        "raster-tiles": {
+          type: "raster",
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          tileSize: 256,
+          attribution: "© OpenStreetMap contributors"
+        },
         h3: {
           type: "vector",
           url: "pmtiles://" + tilesUrl
         }
       },
       layers: [
+        {
+          id: "osm-tiles",
+          type: "raster",
+          source: "raster-tiles",
+          minzoom: 0,
+          maxzoom: 19
+        },
         {
           id: "h3-fill",
           type: "fill",
@@ -160,22 +173,33 @@ var previewTemplate = template.Must(template.New("preview").Parse(`<!DOCTYPE htm
         }
       ]
     },
-    center: [0, 0],
-    zoom: 2
+    center: [-71.059570, 42.326054], // Default to Boston area based on sample data
+    zoom: 10
   });
 
   map.addControl(new maplibregl.NavigationControl());
 
-  try {
-    const metadata = await pmtiles.getMetadata();
-    if (metadata && metadata.center && metadata.center.length >= 3) {
-      map.jumpTo({ center: [metadata.center[0], metadata.center[1]], zoom: metadata.center[2] });
-    } else if (metadata && metadata.bounds && metadata.bounds.length >= 4) {
-      map.fitBounds([[metadata.bounds[0], metadata.bounds[1]], [metadata.bounds[2], metadata.bounds[3]]], { padding: 20 });
+  // Wait for the map to load before trying to access metadata
+  map.on('load', async function() {
+    try {
+      console.log('Loading PMTiles metadata...');
+      const metadata = await pmtilesInstance.getMetadata();
+      console.log('Metadata loaded:', metadata);
+      
+      if (metadata && metadata.center && metadata.center.length >= 3) {
+        console.log('Using center from metadata:', metadata.center);
+        map.jumpTo({ center: [metadata.center[0], metadata.center[1]], zoom: metadata.center[2] });
+      } else if (metadata && metadata.bounds && metadata.bounds.length >= 4) {
+        console.log('Using bounds from metadata:', metadata.bounds);
+        map.fitBounds([[metadata.bounds[0], metadata.bounds[1]], [metadata.bounds[2], metadata.bounds[3]]], { padding: 20 });
+      } else {
+        console.log('No center or bounds in metadata, using default view');
+      }
+    } catch (err) {
+      console.error("Unable to load PMTiles metadata", err);
+      // Keep the default view if metadata loading fails
     }
-  } catch (err) {
-    console.warn("Unable to load PMTiles metadata", err);
-  }
+  });
 })();
 </script>
 </body>

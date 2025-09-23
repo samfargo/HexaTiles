@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/parquet-go/parquet-go"
+	h3 "github.com/uber/h3-go/v4"
 
 	"github.com/hexatiles/hexatiles/internal/build"
 	"github.com/hexatiles/hexatiles/internal/tiler"
@@ -50,6 +52,7 @@ func newRootCommand() *cobra.Command {
 	cmd.AddCommand(newInspectCommand())
 	cmd.AddCommand(newPreviewCommand())
 	cmd.AddCommand(newSchemaCommand())
+	cmd.AddCommand(newSampleCommand())
 
 	return cmd
 }
@@ -277,6 +280,97 @@ func parseList(value string) []string {
 		}
 	}
 	return out
+}
+
+func newSampleCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "sample",
+		Short: "Generate a sample Parquet file with H3 hexagons for testing",
+		Long:  "Generate a sample Parquet file containing H3 hexagons around Boston Common with demo data (score, category).",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			output, _ := cmd.Flags().GetString("out")
+			count, _ := cmd.Flags().GetInt("count")
+			resolution, _ := cmd.Flags().GetInt("resolution")
+			
+			return generateSampleData(output, count, resolution)
+		},
+	}
+
+	cmd.Flags().StringP("out", "o", "dist/sample.parquet", "Output Parquet file path")
+	cmd.Flags().IntP("count", "c", 5, "Number of rings around center point")
+	cmd.Flags().IntP("resolution", "r", 8, "H3 resolution (0-15)")
+
+	return cmd
+}
+
+// SampleRow represents a row in the sample Parquet file
+type SampleRow struct {
+	H3       string
+	Score    float64
+	Category string
+}
+
+func generateSampleData(outputPath string, ringCount int, resolution int) error {
+	// Create output directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
+	}
+
+	// Generate H3 hexagons around Boston Common (42.355, -71.065)
+	lat, lng := 42.355, -71.065
+	centerHex, err := h3.LatLngToCell(h3.LatLng{Lat: lat, Lng: lng}, resolution)
+	if err != nil {
+		return fmt.Errorf("failed to convert lat/lng to H3 cell: %w", err)
+	}
+	
+	// Get hexagons in rings around the center
+	hexes, err := h3.GridDisk(centerHex, ringCount)
+	if err != nil {
+		return fmt.Errorf("failed to generate H3 grid disk: %w", err)
+	}
+	
+	// Create sample data rows
+	rows := make([]SampleRow, 0, len(hexes))
+	for i, hex := range hexes {
+		score := float64(i%10) * 0.1
+		category := "demo"
+		if i%2 == 1 {
+			category = "test"
+		}
+		rows = append(rows, SampleRow{
+			H3:       h3.IndexToString(uint64(hex)),
+			Score:    score,
+			Category: category,
+		})
+	}
+
+	// Create Parquet file
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create parquet file: %w", err)
+	}
+	defer file.Close()
+
+	// Create Parquet writer with explicit schema
+	schema := parquet.SchemaOf(SampleRow{})
+	writer := parquet.NewGenericWriter[SampleRow](file, schema)
+
+	// Write rows to Parquet
+	_, err = writer.Write(rows)
+	if err != nil {
+		return fmt.Errorf("failed to write parquet data: %w", err)
+	}
+
+	// Close writer
+	err = writer.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close parquet writer: %w", err)
+	}
+
+	fmt.Printf("Generated sample data with %d H3 hexagons at resolution %d\n", len(rows), resolution)
+	fmt.Printf("Written to: %s\n", outputPath)
+
+	return nil
 }
 
 func formatDuration(d time.Duration) string {

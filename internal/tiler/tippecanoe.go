@@ -70,7 +70,7 @@ func (r *TippecanoeRunner) Run(ctx context.Context, inputNDJSON, outputMBTiles s
 		"--coalesce-densest-as-needed",
 		"--no-feature-limit",
 		"--no-tile-size-limit",
-		"--sort-by", sortBy,
+		"--order-by=" + sortBy,
 	}
 
 	if !opts.Simplify {
@@ -84,8 +84,13 @@ func (r *TippecanoeRunner) Run(ctx context.Context, inputNDJSON, outputMBTiles s
 		args = append(args, "--maximum-zoom", strconv.Itoa(opts.MaxZoom))
 	}
 
+    // Note: tippecanoe doesn't have an --attributes option
+    // Attributes are controlled by --include/--exclude options
     if len(opts.Attributes) > 0 {
-        args = append(args, "--attributes", strings.Join(opts.Attributes, ","))
+        // For now, we'll include all specified attributes
+        for _, attr := range opts.Attributes {
+            args = append(args, "--include=" + attr)
+        }
     }
 
 	for key, value := range opts.Metadata {

@@ -17,7 +17,8 @@ tidy:
 
 sample: build
 	mkdir -p $(DIST)
-	@echo "(Skipping Parquet generator; please place a sample Parquet at $(DIST)/sample.parquet)"
+	@echo "Generating sample Parquet file..."
+	./$(BINARY) sample --out $(DIST)/sample.parquet --count 5 --resolution 8
 	./$(BINARY) build --in $(DIST)/sample.parquet --out $(DIST)/sample.pmtiles --keep-ndjson
 
 .PHONY: release

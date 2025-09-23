@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -12,8 +13,7 @@ import (
 	"sync"
 
 	h3 "github.com/uber/h3-go/v4"
-	local "github.com/xitongsys/parquet-go-source/local"
-	"github.com/xitongsys/parquet-go/reader"
+	"github.com/parquet-go/parquet-go"
 )
 
 // ReaderOptions controls how Parquet rows are streamed.
@@ -38,7 +38,7 @@ type Row struct {
 type Reader struct {
 	opts      ReaderOptions
 	filePath  string
-	pr        *reader.ParquetReader
+	reader    *parquet.Reader
 	totalRows int64
 
 	mu     sync.Mutex
@@ -56,23 +56,20 @@ func NewReader(path string, opts ReaderOptions) (*Reader, error) {
 		opts.Parallel = runtime.NumCPU()
 	}
 
-	fr, err := local.NewLocalFileReader(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open parquet file: %w", err)
 	}
 
-	pr, err := reader.NewParquetReader(fr, new(map[string]any), int64(opts.Parallel))
-	if err != nil {
-		fr.Close()
-		return nil, fmt.Errorf("create parquet reader: %w", err)
-	}
+	reader := parquet.NewReader(file)
 
-	total := pr.GetNumRows()
+	// Get total rows from metadata
+	total := reader.NumRows()
 
 	r := &Reader{
 		opts:      opts,
 		filePath:  filepath.Clean(path),
-		pr:        pr,
+		reader:    reader,
 		totalRows: total,
 	}
 
@@ -84,12 +81,9 @@ func (r *Reader) Close() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if r.pr != nil {
-		r.pr.ReadStop()
-		if r.pr.PFile != nil {
-			_ = r.pr.PFile.Close()
-		}
-		r.pr = nil
+	if r.reader != nil {
+		r.reader.Close()
+		r.reader = nil
 	}
 	r.buffer = nil
 	return nil
@@ -103,7 +97,7 @@ func (r *Reader) Next() (*Row, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if r.pr == nil {
+	if r.reader == nil {
 		return nil, fmt.Errorf("reader closed")
 	}
 
@@ -136,28 +130,38 @@ func (r *Reader) fillBuffer() error {
 		toRead = remaining
 	}
 
-	rawRows, err := r.pr.ReadByNumber(toRead)
-	if err != nil {
+	// Read rows using the new parquet library
+	rows := make([]parquet.Row, toRead)
+	n, err := r.reader.ReadRows(rows)
+	if err != nil && err != io.EOF {
 		return fmt.Errorf("read parquet rows: %w", err)
 	}
 
-	if len(rawRows) == 0 {
+	if n == 0 {
 		return io.EOF
 	}
 
 	r.buffer = r.buffer[:0]
 	r.cursor = 0
 
-	for _, raw := range rawRows {
-		rowMap, ok := raw.(map[string]any)
-		if !ok {
-			return fmt.Errorf("unexpected parquet row type %T", raw)
+	// Get schema to understand column structure
+	schema := r.reader.Schema()
+	
+	for i := 0; i < n; i++ {
+		rowNumber := r.read + 1
+		
+		// Convert parquet.Row to map[string]any
+		rowMap := make(map[string]any)
+		for j, value := range rows[i] {
+			if j < len(schema.Fields()) {
+				field := schema.Fields()[j]
+				rowMap[field.Name()] = value
+			}
 		}
 
-		rowNumber := r.read + 1
 		props := extractProperties(rowMap)
-
 		cell, cellString, cellErr := extractCell(rowMap)
+		
 		if cellErr != nil {
 			r.buffer = append(r.buffer, &Row{
 				RowNumber:  rowNumber,
