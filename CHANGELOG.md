@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.11](https://github.com/samfargo/HexaTiles/compare/hexatiles-v0.1.10...hexatiles-v0.1.11) (2026-08-08)
+
+
+### Features
+
+* add Windows build support for scoop ([29f42ec](https://github.com/samfargo/HexaTiles/commit/29f42ec026186351241f202057cd1520f2813f55))
+
+
+### Bug Fixes
+
+* correct argument syntax in release workflow for GoReleaser ([af3f44c](https://github.com/samfargo/HexaTiles/commit/af3f44cf1dd0282fcf8a0b29b8fc65a74033ad24))
+* enable CGO for all platforms with proper cross-compilation ([dc15fe8](https://github.com/samfargo/HexaTiles/commit/dc15fe899c1e287b8099e52d66e1b08b439b4c69))
+* resolve cross-platform build issues ([3378c28](https://github.com/samfargo/HexaTiles/commit/3378c2884913d3b7ecb616c179fd75ab990a818b))
+* resolve goreleaser configuration issues ([9a836d2](https://github.com/samfargo/HexaTiles/commit/9a836d2e7de7103ce489045607f04f0ca0271341))
+
 ## [0.1.10](https://github.com/samfargo/HexaTiles/compare/hexatiles-v0.1.9...hexatiles-v0.1.10) (2025-09-23)
 
 
